@@ -135,11 +135,11 @@ var peerInfos []peer.AddrInfo
 	// hch <- h
 
 	getMessage := make(chan string)
-	complete := make(chan string)
+	anyConnectedchan := make(chan bool)
 //---------------------------------------------------------
 // Pubsub
 //---------------------------------------------------------
-go DiscoverPeers(ctx, h, complete)
+go DiscoverPeers(ctx, h, anyConnectedchan)
 // fmt.Println(<-complete)
 
 
@@ -210,7 +210,7 @@ func initDHT(ctx context.Context, h host.Host) *dht.IpfsDHT {
 	return kademliaDHT
 }
 
-func DiscoverPeers(ctx context.Context, h host.Host, complete chan string) {
+func DiscoverPeers(ctx context.Context, h host.Host, anyConnectedchan chan bool) {
 	
 	kademliaDHT := initDHT(ctx, h)
 	routingDiscovery := drouting.NewRoutingDiscovery(kademliaDHT)
@@ -236,12 +236,13 @@ func DiscoverPeers(ctx context.Context, h host.Host, complete chan string) {
 			} else {
 				fmt.Println("Connected to:", peer.ID.Pretty())
 				anyConnected = true
+				anyConnectedchan <- anyConnected
 			}
 		}
 	}
 	fmt.Print("Peer discovery complete \n")
-	complete <- "Peer discovery complete \n"
-	defer close(complete)
+	// complete <- "Peer discovery complete \n"
+	// defer close(complete)
 }
 
 
