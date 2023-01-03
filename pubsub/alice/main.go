@@ -134,12 +134,12 @@ var peerInfos []peer.AddrInfo
 	// ctxch <- ctx
 	// hch <- h
 
-	//  getMessage := make(chan string)
-	//  complete := make(chan string)
+	 getMessage := make(chan string)
+	anyConnectedchan := make(chan bool)
 //---------------------------------------------------------
 // Pubsub
 //---------------------------------------------------------
-go DiscoverPeers(ctx, h)
+go DiscoverPeers(ctx, h, anyConnectedchan)
 // fmt.Println(<-complete)
 
 
@@ -153,7 +153,7 @@ topic, err := ps.Join(nameTopic)
 		panic(err)
 	}
 	
-	go streamConsoleTo(ctx, topic)
+	go streamConsoleTo(ctx, topic, getMessage)
 	// fmt.Println("getMessage: ", getMessage)
 
 	sub, err := topic.Subscribe()
@@ -210,7 +210,7 @@ func initDHT(ctx context.Context, h host.Host) *dht.IpfsDHT {
 	return kademliaDHT
 }
 
-func DiscoverPeers(ctx context.Context, h host.Host) {
+func DiscoverPeers(ctx context.Context, h host.Host, anyConnectedchan chan bool) {
 	
 	kademliaDHT := initDHT(ctx, h)
 	routingDiscovery := drouting.NewRoutingDiscovery(kademliaDHT)
@@ -218,6 +218,7 @@ func DiscoverPeers(ctx context.Context, h host.Host) {
 
 	// Look for others who have announced and attempt to connect to them
 	anyConnected := false
+	  
 	for !anyConnected {
 		fmt.Println("Searching for peers...")
 		fmt.Println(h.ID())
@@ -235,6 +236,7 @@ func DiscoverPeers(ctx context.Context, h host.Host) {
 			} else {
 				fmt.Println("Connected to:", peer.ID.Pretty())
 				anyConnected = true
+				anyConnectedchan <- anyConnected
 			}
 		}
 	}
@@ -245,7 +247,7 @@ func DiscoverPeers(ctx context.Context, h host.Host) {
 
 
 
-func streamConsoleTo(ctx context.Context, topic *pubsub.Topic) {
+func streamConsoleTo(ctx context.Context, topic *pubsub.Topic, getMessage chan string) {
 	reader := bufio.NewReader(os.Stdin)
 	for {
 		s, err := reader.ReadString('\n')
@@ -255,7 +257,7 @@ func streamConsoleTo(ctx context.Context, topic *pubsub.Topic) {
 		if err := topic.Publish(ctx, []byte(s)); err != nil {
 			fmt.Println("### Publish error:", err)
 		}
-		// getMessage <- "streamConsoleTo channel"
+		getMessage <- s
 	}
 }
 
