@@ -10,9 +10,9 @@ import (
 	"time"
 
 	"github.com/libp2p/go-libp2p"
-	"github.com/libp2p/go-libp2p-core/crypto"
-	"github.com/libp2p/go-libp2p-core/host"
-	"github.com/libp2p/go-libp2p-core/network"
+	"github.com/libp2p/go-libp2p/core/crypto"
+	"github.com/libp2p/go-libp2p/core/host"
+	"github.com/libp2p/go-libp2p/core/network"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
 
 	"github.com/libp2p/go-libp2p/core/peer"
@@ -278,7 +278,7 @@ func DiscoverPeers(complete chan string) {
 				continue
 			} else {
 				rw := bufio.NewReadWriter(bufio.NewReader(stream), bufio.NewWriter(stream))
-	
+				anyConnected = true
 				go writeData(rw)
 				go readData(rw)
 			}
