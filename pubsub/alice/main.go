@@ -10,10 +10,10 @@ import (
 	"time"
 
 	"github.com/libp2p/go-libp2p"
-	"github.com/libp2p/go-libp2p/core/crypto"
-	"github.com/libp2p/go-libp2p/core/host"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
+	"github.com/libp2p/go-libp2p/core/crypto"
+	"github.com/libp2p/go-libp2p/core/host"
 	"github.com/libp2p/go-libp2p/core/peer"
 	drouting "github.com/libp2p/go-libp2p/p2p/discovery/routing"
 	dutil "github.com/libp2p/go-libp2p/p2p/discovery/util"
@@ -134,12 +134,12 @@ var peerInfos []peer.AddrInfo
 	// ctxch <- ctx
 	// hch <- h
 
-	getMessage := make(chan string)
-	anyConnectedchan := make(chan bool)
+	// getMessage := make(chan string)
+	complete := make(chan string)
 //---------------------------------------------------------
 // Pubsub
 //---------------------------------------------------------
-go DiscoverPeers(ctx, h, anyConnectedchan)
+go DiscoverPeers(ctx, h, complete)
 // fmt.Println(<-complete)
 
 
@@ -153,7 +153,7 @@ topic, err := ps.Join(nameTopic)
 		panic(err)
 	}
 	
-	go streamConsoleTo(ctx, topic, getMessage)
+	go streamConsoleTo(ctx, topic)
 	// fmt.Println("getMessage: ", getMessage)
 
 	sub, err := topic.Subscribe()
@@ -210,7 +210,7 @@ func initDHT(ctx context.Context, h host.Host) *dht.IpfsDHT {
 	return kademliaDHT
 }
 
-func DiscoverPeers(ctx context.Context, h host.Host, anyConnectedchan chan bool) {
+func DiscoverPeers(ctx context.Context, h host.Host, complete chan string) {
 	
 	kademliaDHT := initDHT(ctx, h)
 	routingDiscovery := drouting.NewRoutingDiscovery(kademliaDHT)
@@ -236,18 +236,18 @@ func DiscoverPeers(ctx context.Context, h host.Host, anyConnectedchan chan bool)
 			} else {
 				fmt.Println("Connected to:", peer.ID.Pretty())
 				anyConnected = true
-				anyConnectedchan <- anyConnected
+				
 			}
 		}
 	}
 	fmt.Print("Peer discovery complete \n")
-	// complete <- "Peer discovery complete \n"
-	// defer close(complete)
+	complete <- "Peer discovery complete \n"
+	defer close(complete)
 }
 
 
 
-func streamConsoleTo(ctx context.Context, topic *pubsub.Topic, getMessage chan string) {
+func streamConsoleTo(ctx context.Context, topic *pubsub.Topic) {
 	reader := bufio.NewReader(os.Stdin)
 	for {
 		s, err := reader.ReadString('\n')
@@ -257,7 +257,6 @@ func streamConsoleTo(ctx context.Context, topic *pubsub.Topic, getMessage chan s
 		if err := topic.Publish(ctx, []byte(s)); err != nil {
 			fmt.Println("### Publish error:", err)
 		}
-		getMessage <- s
 	}
 }
 

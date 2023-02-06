@@ -98,7 +98,7 @@ muxers := libp2p.ChainOptions(
 	libp2p.Muxer("/mplex/6.7.0", mplex.DefaultTransport),
 )
 	
-var port string = "5002"
+var port string = "5003"
 var relayMultiaddrs []ma.Multiaddr
 relayMultiaddr, _ := ma.NewMultiaddr("/ip4/0.0.0.0/tcp/5001/p2p/12D3KooWDLvrgs6Y2DN35ue6ntibrzxzdk5BCSW4DaogDcdpGoXE")
 relayMultiaddrs = append(relayMultiaddrs, relayMultiaddr)
